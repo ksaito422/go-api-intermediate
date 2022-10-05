@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -17,33 +16,13 @@ func HelloHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func PostArticleHandler(w http.ResponseWriter, req *http.Request) {
-	length, err := strconv.Atoi(req.Header.Get("Content-Length"))
-	if err != nil {
-		http.Error(w, "cannot get content length\n", http.StatusBadRequest)
-		return
-	}
-	reqBodybuffer := make([]byte, length)
-
-	if _, err := req.Body.Read(reqBodybuffer); !errors.Is(err, io.EOF) {
-		http.Error(w, "fail to get request body\n", http.StatusBadRequest)
-		return
-	}
-	defer req.Body.Close()
-
 	var reqArticle models.Article
-	if err := json.Unmarshal(reqBodybuffer, &reqArticle); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
 		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
-		return
 	}
 
 	article := reqArticle
-	jsonData, err := json.Marshal(article)
-	if err != nil {
-		http.Error(w, "fail to encode json\n", http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(jsonData)
+	json.NewEncoder(w).Encode(article)
 }
 
 func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
@@ -61,15 +40,10 @@ func ArticleListHandler(w http.ResponseWriter, req *http.Request) {
 		page = 1
 	}
 
-	articleList := []models.Article{models.Article1, models.Article2}
-	jsonData, err := json.Marshal(articleList)
-	if err != nil {
-		errMsg := fmt.Sprintf("fail to encode json (page %d)\n", page)
-		http.Error(w, errMsg, http.StatusInternalServerError)
-		return
-	}
+	log.Println(page)
 
-	w.Write(jsonData)
+	articleList := []models.Article{models.Article1, models.Article2}
+	json.NewEncoder(w).Encode(articleList)
 }
 
 func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
@@ -78,36 +52,28 @@ func ArticleDetailHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid query parameter", http.StatusBadRequest)
 		return
 	}
+	log.Println(articleID)
 
 	article := models.Article1
-	jsonData, err := json.Marshal(article)
-	if err != nil {
-		errMsg := fmt.Sprintf("fail to encode json (articleID %d)\n", articleID)
-		http.Error(w, errMsg, http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(jsonData)
+	json.NewEncoder(w).Encode(article)
 }
 
 func PostNiceHandler(w http.ResponseWriter, req *http.Request) {
-	article := models.Article1
-	jsonData, err := json.Marshal(article)
-	if err != nil {
-		http.Error(w, "fail to encode json\n", http.StatusInternalServerError)
-		return
+	var reqArticle models.Article
+	if err := json.NewDecoder(req.Body).Decode(&reqArticle); err != nil {
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
 
-	w.Write(jsonData)
+	article := reqArticle
+	json.NewEncoder(w).Encode(article)
 }
 
 func PostCommentHandler(w http.ResponseWriter, req *http.Request) {
-	comment := models.Comment1
-	jsonData, err := json.Marshal(comment)
-	if err != nil {
-		http.Error(w, "fail to encode json\n", http.StatusInternalServerError)
-		return
+	var reqComment models.Article
+	if err := json.NewDecoder(req.Body).Decode(&reqComment); err != nil {
+		http.Error(w, "fail to decode json\n", http.StatusBadRequest)
 	}
 
-	w.Write(jsonData)
+	comment := reqComment
+	json.NewEncoder(w).Encode(comment)
 }
