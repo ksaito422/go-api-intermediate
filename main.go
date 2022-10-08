@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/saitooooooo/go-api-intermediate/controllers"
 	"github.com/saitooooooo/go-api-intermediate/routers"
 	"github.com/saitooooooo/go-api-intermediate/services"
