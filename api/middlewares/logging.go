@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"log"
 	"net/http"
 )
@@ -21,9 +22,14 @@ func (rsw *resLoggingWriter) WriteHeader(code int) {
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// リクエスト情報をロギング
-		log.Println(req.RequestURI, req.Method)
+		traceID := newTraceID()
 
+		// リクエスト情報をロギング
+		log.Printf("[%d]%s %s\n", traceID, req.RequestURI, req.Method)
+
+		ctx := req.Context()
+		ctx = context.WithValue(ctx, traceIDKey{}, traceID)
+		req = req.WithContext(ctx)
 		// 自作のResponseWriterを作って
 		rlw := NewResLoggingWriter(w)
 
@@ -31,6 +37,6 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(rlw, req)
 
 		// 自作ResponseWriterからロギングしたいデータを出す
-		log.Println("res: ", rlw.code)
+		log.Printf("[%d]res: %d", traceID, rlw.code)
 	})
 }
